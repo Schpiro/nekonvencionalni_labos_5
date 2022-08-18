@@ -1,0 +1,3 @@
+module fuzzylogic {
+	requires jFuzzyLogic;
+}

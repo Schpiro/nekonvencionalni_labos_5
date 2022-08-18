@@ -1,0 +1,130 @@
+FUNCTION_BLOCK tipper	// Block definition (there may be more than one block per file)
+
+VAR_INPUT 
+     cough: REAL;
+     temperature: REAL; 
+     headache: REAL;
+     sneezing: REAL;
+     sore_throat: REAL;
+     muscle_aches: REAL;
+END_VAR
+
+VAR_OUTPUT
+ 	diagnosis : REAL;
+END_VAR
+
+FUZZIFY cough
+	TERM light := (0, 1.0) (3, 0.0);
+	TERM mid_light := (2, 0.0) (3, 1.0) (4, 1.0) (5, 0.0);
+	TERM mid := (4, 0.0) (5, 1.0) (6, 1.0) (7, 0.0);
+	TERM heavy := (6, 0.0) (7, 1.0) (8, 1.0) (9, 0.0);
+	TERM very_heavy := (8, 0.0) (9, 1.0) (10, 1.0) (11, 0.0);
+END_FUZZIFY
+
+FUZZIFY temperature
+	TERM hypothermia := (34, 0) (35, 1.0) (35.5, 0.0);
+	TERM below_normal := (35, 0.0) (35.5, 1.0) (35.5, 1.0) (36.5, 0.0);
+	TERM normal := (36, 0.0) (36.5, 1.0) (36.5, 1.0) (37, 0.0);
+	TERM pyrexia := (36.5, 0.0) (37.5, 1.0) (37.5, 1.0) (38, 0);
+	TERM hyperpyrexia := (37.5, 0) (39, 1.0) (39, 1.0) (40, 0);
+END_FUZZIFY
+
+FUZZIFY headache
+	TERM light := (0, 1.0) (3, 0.0);
+	TERM mid_light := (2, 0.0) (3, 1.0) (4, 1.0) (5, 0.0);
+	TERM mid := (4, 0.0) (5, 1.0) (6, 1.0) (7, 0.0);
+	TERM heavy := (6, 0.0) (7, 1.0) (8, 1.0) (9, 0.0);
+	TERM very_heavy := (8, 0.0) (9, 1.0) (10, 1.0) (11, 0.0);
+END_FUZZIFY
+
+FUZZIFY sneezing
+	TERM light := (0, 1.0) (3, 0.0);
+	TERM mid_light := (2, 0.0) (3, 1.0) (4, 1.0) (5, 0.0);
+	TERM mid := (4, 0.0) (5, 1.0) (6, 1.0) (7, 0.0);
+	TERM heavy := (6, 0.0) (7, 1.0) (8, 1.0) (9, 0.0);
+	TERM very_heavy := (8, 0.0) (9, 1.0) (10, 1.0) (11, 0.0);
+END_FUZZIFY
+
+FUZZIFY sore_throat
+	TERM light := (0, 1.0) (3, 0.0);
+	TERM mid_light := (2, 0.0) (3, 1.0) (4, 1.0) (5, 0.0);
+	TERM mid := (4, 0.0) (5, 1.0) (6, 1.0) (7, 0.0);
+	TERM heavy := (6, 0.0) (7, 1.0) (8, 1.0) (9, 0.0);
+	TERM very_heavy := (8, 0.0) (9, 1.0) (10, 1.0) (11, 0.0);
+END_FUZZIFY
+
+FUZZIFY muscle_aches
+	TERM light := (0, 1.0) (3, 0.0);
+	TERM mid_light := (2, 0.0) (3, 1.0) (4, 1.0) (5, 0.0);
+	TERM mid := (4, 0.0) (5, 1.0) (6, 1.0) (7, 0.0);
+	TERM heavy := (6, 0.0) (7, 1.0) (8, 1.0) (9, 0.0);
+	TERM very_heavy := (8, 0.0) (9, 1.0) (10, 1.0) (11, 0.0);
+END_FUZZIFY
+
+DEFUZZIFY diagnosis
+	 TERM covid  := (0,0) (5,1) (10,0);
+	 TERM allergy := (10,0) (15,1) (20,0);
+	 TERM bronhitis := (20,0) (25,1) (30,0);
+	 TERM common_cold := (30,0) (35,1) (40,0);
+	 TERM pneumonia := (40,0) (45,1) (50,0);
+	 TERM angina := (50,0) (55,1) (60,0);
+	 METHOD : COG;
+	 DEFAULT := 0;
+END_DEFUZZIFY
+
+RULEBLOCK job_rules
+	AND : MIN;
+	OR : MAX;
+	ACT : MIN;
+	ACCU : MAX;
+	RULE 1 : IF (cough IS very_heavy OR cough IS heavy) 						AND 
+				(temperature IS pyrexia OR temperature IS hyperpyrexia) 		AND 
+				(sore_throat IS mid 	OR sore_throat IS light)				AND 
+				(headache IS mid_light OR headache IS light) 					AND 
+				(sneezing IS light) 											AND 
+				(muscle_aches IS mid_light OR muscle_aches IS mid) 				THEN 
+				diagnosis IS covid;
+	
+	RULE 2 : IF (cough IS mid OR cough IS heavy) 										AND 
+				(temperature IS normal) 												AND 
+				(sore_throat IS mid OR sore_throat IS light OR sore_throat IS mid_light)AND 
+				(headache IS light) 													AND 
+				(sneezing IS mid OR sneezing IS heavy OR sneezing IS very_heavy)		AND 
+				(muscle_aches IS light) 												THEN 
+				diagnosis IS allergy;
+	
+	RULE 3 : IF (cough IS mid OR cough IS heavy OR cough IS very_heavy)						AND 
+				(temperature IS normal) 													AND 
+				(sore_throat IS mid OR sore_throat IS heavy OR sore_throat IS very_heavy)	AND 
+				(headache IS mid OR headache IS heavy OR headache IS very_heavy)			AND 
+				(sneezing IS light OR sneezing IS mid_light)								AND 
+				(muscle_aches IS mid OR muscle_aches IS heavy OR muscle_aches IS mid_light)	THEN 
+				diagnosis IS bronhitis;
+	
+	RULE 4 : IF (cough IS mid OR cough IS heavy)											AND 
+				(temperature IS normal OR temperature IS pyrexia)							AND 
+				(sore_throat IS mid OR sore_throat IS heavy OR sore_throat IS very_heavy)	AND 
+				(headache IS mid OR headache IS mid_light OR headache IS light)				AND 
+				(sneezing IS mid OR sneezing IS mid_light OR sneezing IS heavy)				AND 
+				(muscle_aches IS mid OR muscle_aches IS light OR muscle_aches IS mid_light)	THEN  
+				diagnosis IS common_cold;
+	
+	RULE 5 : IF (cough IS very_heavy OR cough IS heavy)										AND 
+				(temperature IS hyperpyrexia OR temperature IS pyrexia)						AND 
+				(sore_throat IS light)														AND 
+				(headache IS light)															AND 
+				(sneezing IS light)															AND 
+				(muscle_aches IS light)														THEN 
+				 diagnosis IS pneumonia;
+	
+	RULE 6 : IF (cough IS mid OR cough IS heavy OR cough IS very_heavy)						AND 
+				(temperature IS normal OR temperature IS pyrexia)							AND 
+				(sore_throat IS mid OR sore_throat IS heavy OR sore_throat IS very_heavy)	AND 
+				(headache IS mid OR headache IS heavy OR headache IS very_heavy)			AND 
+				(sneezing IS light)															AND 
+				(muscle_aches IS mid OR muscle_aches IS light OR muscle_aches IS mid_light)	THEN  
+				diagnosis IS angina; 
+
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
